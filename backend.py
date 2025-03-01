@@ -8,6 +8,10 @@ openai.api_key = "sk-proj-l0ZgHCxd8IC2bVW16882L7AFoHbnhBQs2T0iig4Tt7yEKRa60vhf-O
 def home():
     return render_template("index.html")
 
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
 @app.route('/get_resources', methods=['POST'])
 def get_resources():
     data = request.json
