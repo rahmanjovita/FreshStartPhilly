@@ -2,6 +2,7 @@ body {
   background-color: rgb(250, 207, 178);
   font-family: Avantgarde, TeX Gyre Adventor, URW Gothic L, sans-serif;
   text-align: center;
+  font-size: 25px;
 }
 h1 {
   color: rgb(0, 0, 0);
@@ -20,4 +21,14 @@ h1 {
   left: 0;
   top: 10%;
   transform: translateY(-50%);
+}
+
+button {
+  width: 125px;
+  height: 25px;
+}
+
+#location {
+  width: 125px;
+  height: 22px;
 }
