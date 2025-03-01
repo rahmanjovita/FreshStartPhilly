@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Philly Reentry Navigator</title>
+    <title>Fresh Start Philly</title>
 </head>
 <body>
     <h1>Find Resources in Philadelphia</h1>
 
     <!-- Location input form -->
-    <label for="location">Enter Your Location:</label>
-    <input type="text" id="location" placeholder="Enter your city or neighborhood">
+    <label for="location">Enter Your Zip Code (or allow the browser to your location):</label>
+    <input type="text" id="location" placeholder="Enter your location">
     
+    <button onclick="getLocation()">Get My Location</button>
+
     <h2>Check the boxes that apply to you:</h2>
 
     <!-- Checkboxes for different needs -->
@@ -51,6 +53,24 @@
     <pre id="results"></pre>
 
     <script>
+        
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    
+                    // Display the location in the input field
+                    document.getElementById("location").value = `Lat: ${latitude}, Lon: ${longitude}`;
+                }, function(error) {
+                    console.error('Error occurred. Error code: ' + error.code);
+                    alert("Unable to retrieve your location. Please enter it manually.");
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
         function fetchResources() {
             // Get the user's location
             let location = document.getElementById("location").value;
