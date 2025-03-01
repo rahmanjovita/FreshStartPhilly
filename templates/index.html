@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fresh Start Philly</title>
-</head>
-<body>
+  </head>
+
     <h1>Find Resources in Philadelphia</h1>
 
     <!-- Location input form -->
@@ -18,32 +22,42 @@
 
     <!-- Checkboxes for different needs -->
     <div>
-        <input type="checkbox" id="food" name="needs" value="food">
-        <label for="food">Food</label>
+      <input type="checkbox" id="food" name="needs" value="food" />
+      <label for="food">Food</label>
     </div>
     <div>
-        <input type="checkbox" id="housing" name="needs" value="housing">
-        <label for="housing">Housing</label>
+      <input type="checkbox" id="housing" name="needs" value="housing" />
+      <label for="housing">Housing</label>
     </div>
     <div>
-        <input type="checkbox" id="mentalHealth" name="needs" value="mental_health">
-        <label for="mentalHealth">Mental Health</label>
+      <input
+        type="checkbox"
+        id="mentalHealth"
+        name="needs"
+        value="mental_health"
+      />
+      <label for="mentalHealth">Mental Health</label>
     </div>
     <div>
-        <input type="checkbox" id="jobSearch" name="needs" value="job_search">
-        <label for="jobSearch">Job Search</label>
+      <input type="checkbox" id="jobSearch" name="needs" value="job_search" />
+      <label for="jobSearch">Job Search</label>
     </div>
     <div>
-        <input type="checkbox" id="childCare" name="needs" value="child_care">
-        <label for="childCare">Child Care</label>
+      <input type="checkbox" id="childCare" name="needs" value="child_care" />
+      <label for="childCare">Child Care</label>
     </div>
     <div>
-        <input type="checkbox" id="medicalCare" name="needs" value="medical_care">
-        <label for="medicalCare">Medical Care</label>
+      <input
+        type="checkbox"
+        id="medicalCare"
+        name="needs"
+        value="medical_care"
+      />
+      <label for="medicalCare">Medical Care</label>
     </div>
     <div>
-        <input type="checkbox" id="education" name="needs" value="education">
-        <label for="education">Education</label>
+      <input type="checkbox" id="education" name="needs" value="education" />
+      <label for="education">Education</label>
     </div>
 
     <!-- Submit button -->
@@ -53,7 +67,19 @@
     <pre id="results"></pre>
 
     <script>
-        
+      function fetchResources() {
+        // Get the user's location
+        let location = document.getElementById("location").value;
+
+        // Get the selected needs (checkboxes that are checked)
+        let needs = [];
+        const checkboxes = document.querySelectorAll(
+          'input[name="needs"]:checked'
+      );
+        checkboxes.forEach((checkbox) => {
+          needs.push(checkbox.value);
+        });
+    }  
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
@@ -82,23 +108,24 @@
                 needs.push(checkbox.value);
             });
 
-            // Send location and needs to the server via POST request
-            fetch('/get_resources', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ location, needs })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Display the results from the server
-                if (data.resources) {
-                    document.getElementById("results").innerText = data.resources;
-                } else if (data.error) {
-                    document.getElementById("results").innerText = "Error: " + data.error;
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        }
+        // Send location and needs to the server via POST request
+        fetch("/get_resources", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ location, needs }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // Display the results from the server
+            if (data.resources) {
+              document.getElementById("results").innerText = data.resources;
+            } else if (data.error) {
+              document.getElementById("results").innerText =
+                "Error: " + data.error;
+            }
+          })
+          .catch((error) => console.error("Error:", error));
+      }
     </script>
-</body>
+  </body>
 </html>
