@@ -8,6 +8,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fresh Start Philly</title>
+
+        <!-- Leaflet CSS -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+        <!-- Leaflet JS (this must come before your custom script that uses L) -->
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+        <style>
+            #map {
+                height: 500px;
+                width: 100%;
+            }
+            #results {
+                margin-top: 20px;
+                padding: 10px;
+                background-color: #f9f9f9;
+                border-radius: 5px;
+            }
+            .resource {
+                padding: 10px;
+                border-bottom: 1px solid #ddd;
+            }
+        </style>
+    
   </head>
 
   <div id="header">
@@ -86,7 +108,24 @@
     <!-- Display results -->
     <pre id="results"></pre>
 
+    <!-- Leaflet map -->
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+
     <script>
+        let map;
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    document.getElementById("location").value = `Lat: ${position.coords.latitude}, Lon: ${position.coords.longitude}`;
+                });
+            }
+        }
+
+
       function fetchResources() {
         // Get the user's location
         let location = document.getElementById("location").value;
@@ -137,15 +176,26 @@
           .then((response) => response.json())
           .then((data) => {
             // Display the results from the server
-            if (data.resources) {
-              document.getElementById("results").innerText = data.resources;
-            } else if (data.error) {
-              document.getElementById("results").innerText =
-                "Error: " + data.error;
-            }
+            document.getElementById("results").innerText = data.summary;
+            displayMap(data.resources);
+
           })
           .catch((error) => console.error("Error:", error));
       }
+
+      function displayMap(resources) {
+            if (!map) {
+                map = L.map('map').setView([39.9526, -75.1652], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            }
+
+            resources.forEach(resource => {
+                L.marker([resource.lat, resource.lng])
+                    .addTo(map)
+                    .bindPopup(`<b>${resource.name}</b><br>${resource.description}`);
+            });
+        }
+
     </script>
   </body>
 </html>
