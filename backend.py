@@ -1,21 +1,31 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, render_template, request
+import os
 from openai import OpenAI
 import requests
 
 app = Flask(__name__)
-client = OpenAI("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")  # Correct way to initialize OpenAI client
+client = OpenAI(api_key="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")
 
-# Dummy dataset URLs (Replace with actual URLs)
 DATASETS = {
-    "housing": "https://example.com/housing.json",
-    "jobs": "https://example.com/jobs.json",
-    "healthcare": "https://example.com/healthcare.json"
+    'food': 'C:\\Users\\Prashanth\\Downloads\\free_meal_sites.geojson',
+    # 'housing': 'https://data.opendataphilly.org/resource/pha-housing-sites.json', 
+    'mental_health': 'C:\\Users\\Prashanth\\Downloads\\DOH_CommunityMentalHealthCenters202106.geojson',
+    # 'child_care': 'https://data.opendataphilly.org/resource/child-care-search.json',
+    # 'medical_care': 'https://opendataphilly.org/datasets/dvrpcs-equity-through-access-map-toolkit.json',
+    'esl': 'C:\\Users\\Prashanth\\Downloads\\esl_class_locations.geojson'
 }
+@app.route('/')
+def home():
+    return render_template("index.html")
+
+@app.route('/about')
+def about():
+    return render_template("about.html")
 
 @app.route('/get_resources', methods=['POST'])
 def get_resources():
     user_needs = request.json.get('needs', [])
-
+    
     # Step 1: Use AI to determine relevant datasets
     dataset_list = ", ".join(DATASETS.keys())
     prompt = f"""
@@ -46,15 +56,14 @@ def get_resources():
                         "description": item.get("description", "No description available"),
                         "category": key
                     })
-
+    
     # Step 3: AI-powered summarization of resources
     summary_prompt = f"Summarize these resources for a user: {resources}"
     summary_response = client.chat.completions.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "Summarize these resources for a user."},
-            {"role": "user", "content": summary_prompt}
-        ],
+            {"role": "user", "content": summary_prompt}],
         max_tokens=200
     )
     summary_text = summary_response.choices[0].message.content.strip()
