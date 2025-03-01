@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Philly Reentry Navigator</title>
+</head>
+<body>
+    <h1>Find Resources in Philadelphia</h1>
+    <input type="text" id="query" placeholder="Enter your needs (food, shelter, etc.)">
+    <button onclick="fetchResources()">Find</button>
+    <pre id="results"></pre>
+
+    <script>
+        function fetchResources() {
+            let query = document.getElementById("query").value;
+            fetch('/get_resources', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            })
+            .then(response => response.json())
+            .then(data => document.getElementById("results").innerText = data.resources)
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
