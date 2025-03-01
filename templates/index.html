@@ -2,37 +2,38 @@
 <html lang="en">
   <head>
     <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
+      rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fresh Start Philly</title>
+
+    <!-- Leaflet CSS and JS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   </head>
 
-  <div id="header">
-    <!-- Link to the homepage (index.html) -->
-    <a href="{{url_for('home')}}">
-        <!-- Logo Image -->
-        <img src="../static/freshstartphillylogo.png" alt="Our Logo">
-    </a> 
-
-    <!-- Navigation Links Section -->
-    <div id="nav-links">
+  <body>
+    <!-- Navigation and Content -->
+    <div id="header">
+      <a href="{{url_for('home')}}">
+        <img src="../static/freshstartphillylogo.png" alt="Our Logo" />
+      </a>
+      <div id="nav-links">
         <a href="{{url_for('home')}}">Home</a>
         <a href="{{url_for('about')}}">About</a>
+      </div>
     </div>
-</div>
 
     <h1>Find Resources in Philadelphia</h1>
 
     <!-- Location input form -->
     <label for="location">Enter Your Zip Code:</label>
-    <input type="text" id="location" placeholder="Enter your location">
-    <label for="location" >&ensp; or &ensp; </label>
+    <input type="text" id="location" placeholder="Enter your location" />
+    <label for="location">&ensp; or &ensp;</label>
     <button onclick="getLocation()">Get Your Location</button>
-
-    
 
     <h2>Check the resources you'd like to find:</h2>
 
@@ -61,7 +62,6 @@
     <div>
       <input type="checkbox" id="childCare" name="needs" value="child_care" />
       <label for="childCare">Child Care</label>
-
     </div>
     <div>
       <input
@@ -71,64 +71,45 @@
         value="medical_care"
       />
       <label for="medicalCare">Medical Care</label>
-
     </div>
     <div>
-      <input type="checkbox" id="education" name="needs" value="education" />
-      <label for="education">Education</label>
-      <br>
-    </br>
+      <input type="checkbox" id="esl" name="needs" value="esl" />
+      <label for="esl">ESL Classes</label>
     </div>
 
     <!-- Submit button -->
     <button onclick="fetchResources()">Find Resources</button>
 
+    <!-- Map container -->
+    <h2>Map of Resources</h2>
+    <div id="map" style="width: 100%; height: 400px;"></div>
+
     <!-- Display results -->
     <pre id="results"></pre>
 
     <script>
+      function getLocation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function (position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            document.getElementById("location").value = `Lat: ${latitude}, Lon: ${longitude}`;
+          });
+        } else {
+          alert("Geolocation is not supported by this browser.");
+        }
+      }
+
       function fetchResources() {
-        // Get the user's location
         let location = document.getElementById("location").value;
 
-        // Get the selected needs (checkboxes that are checked)
         let needs = [];
-        const checkboxes = document.querySelectorAll(
-          'input[name="needs"]:checked'
-      );
+        const checkboxes = document.querySelectorAll('input[name="needs"]:checked');
         checkboxes.forEach((checkbox) => {
           needs.push(checkbox.value);
         });
-    }  
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
-                    
-                    // Display the location in the input field
-                    document.getElementById("location").value = `Lat: ${latitude}, Lon: ${longitude}`;
-                }, function(error) {
-                    console.error('Error occurred. Error code: ' + error.code);
-                    alert("Unable to retrieve your location. Please enter it manually.");
-                });
-            } else {
-                alert("Geolocation is not supported by this browser.");
-            }
-        }
 
-        function fetchResources() {
-            // Get the user's location
-            let location = document.getElementById("location").value;
-            
-            // Get the selected needs (checkboxes that are checked)
-            let needs = [];
-            const checkboxes = document.querySelectorAll('input[name="needs"]:checked');
-            checkboxes.forEach((checkbox) => {
-                needs.push(checkbox.value);
-            });
-
-        // Send location and needs to the server via POST request
         fetch("/get_resources", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -136,12 +117,24 @@
         })
           .then((response) => response.json())
           .then((data) => {
-            // Display the results from the server
             if (data.resources) {
-              document.getElementById("results").innerText = data.resources;
-            } else if (data.error) {
-              document.getElementById("results").innerText =
-                "Error: " + data.error;
+              document.getElementById("results").innerText = JSON.stringify(data.resources, null, 2);
+
+              // Initialize the map
+              const map = L.map('map').setView([39.9526, -75.1652], 12); // Center on Philadelphia
+
+              // Add OpenStreetMap tiles
+              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+              }).addTo(map);
+
+              // Add markers for resources
+              data.resources.forEach((resource) => {
+                const marker = L.marker([resource.lat, resource.lng]).addTo(map);
+                marker.bindPopup(`<b>${resource.name}</b><br>${resource.description}`);
+              });
+            } else {
+              document.getElementById("results").innerText = "No resources found";
             }
           })
           .catch((error) => console.error("Error:", error));
