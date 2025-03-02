@@ -96,7 +96,15 @@ def get_resources():
                         name = properties.get('name', 'Unknown')
                         website = properties.get('website', 'No website available')
 
-                    description = f"Address: {address}<br>Phone: {phone}<br>Website: <a href='http://{website}' target='_blank'>{website}</a>"
+                    if website not in ['No website available', '', None]:
+                        if not website.startswith('http'):
+                            website = 'https://' + website
+
+                    description = (
+                        f"Address: {address}<br>"
+                        f"Phone: {phone}<br>"
+                        f"Website: <a href='{website}' target='_blank'>{website}</a>"
+                    )
 
                     resources["features"].append({
                         "type": "Feature",
