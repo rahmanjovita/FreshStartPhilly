@@ -79,8 +79,8 @@ def get_resources():
 
                     elif key == "medical_care":
                         # Medical care-specific fields
-                        name = properties.get('name', 'Unknown Medical Care Center')
-                        website = properties.get('website_url', 'No website available')
+                        name = properties.get('NAME', 'Unknown Medical Care Center')
+                        website = properties.get('WEBSITE', 'No website available')
 
                     elif key == "esl":
                         # ESL-specific fields
