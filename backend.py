@@ -10,9 +10,14 @@ HUGGINGFACE_API_KEY = "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"  # Replace with yo
 HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/gpt2"  # GPT-2 model API
 
 DATASETS = {
-    'food': 'C:\\Users\\Prashanth\\Downloads\\free_meal_sites.geojson',
-    'housing': 'C:\\Users\\Prashanth\\Downloads\\HousingCounselingAgencies.geojson',
-    'esl': 'C:\\Users\\Prashanth\\Downloads\\esl_class_locations.geojson'
+    #'food': 'C:\\Users\\Prashanth\\Downloads\\free_meal_sites.geojson',
+    #'housing': 'C:\\Users\\Prashanth\\Downloads\\HousingCounselingAgencies.geojson',
+    #'esl': 'C:\\Users\\Prashanth\\Downloads\\esl_class_locations.geojson'
+
+    'food': '/Users/jovitarahman/Documents/free_meal_sites.geojson',
+    'medical_care': '/Users/jovitarahman/Documents/Health_Centers.geojson',
+    'esl': '/Users/jovitarahman/Documents/esl_class_locations.geojson',
+    'housing':'/Users/jovitarahman/Documents/HousingCounselingAgencies.geojson'
 }
 
 @app.route('/')
@@ -61,18 +66,33 @@ def get_resources():
                         print(f"Warning: Missing or invalid coordinates for {properties.get('AGENCY', 'Unknown')}")
                         continue
 
-                    # Handle Housing Dataset Specifically
-                    if key == "housing":
-                        name = properties.get('AGENCY', 'Unknown Agency')
-                        address = properties.get('STREET_ADDRESS', 'No address available')
-                        phone = properties.get('PHONE_NUMBER', 'No phone available')
+                    # Handle specific datasets (food, housing, medical_care, ESL)
+                    if key == "food":
+                    # Food-specific fields
+                        name = properties.get('site_name', 'Unknown Food Site')
+                        website = properties.get('website', 'No website available')
+
+                    elif key == "housing":
+                    # Housing-specific fields
+                        name = properties.get('AGENCY', 'Unknown Housing Agency')
                         website = properties.get('WEBSITE_URL', 'No website available')
 
-                        description = f"Address: {address}<br>Phone: {phone}<br>Website: <a href='http://{website}' target='_blank'>{website}</a>"
+                    elif key == "medical_care":
+                        # Medical care-specific fields
+                        name = properties.get('name', 'Unknown Medical Care Center')
+                        website = properties.get('website_url', 'No website available')
+
+                    elif key == "esl":
+                        # ESL-specific fields
+                        name = properties.get('provider', 'Unknown ESL Provider')
+                        website = properties.get('website', 'No website available')
+
                     else:
-                        # Default extraction for other datasets (food, esl, etc.)
-                        name = properties.get('site_name') or properties.get('provider') or 'Unknown'
-                        description = properties.get('category') or properties.get('description') or 'No description available'
+                        # Default extraction for other datasets (if any)
+                        name = properties.get('name', 'Unknown')
+                        website = properties.get('website', 'No website available')
+
+                    description = f"Website: <a href='http://{website}' target='_blank'>{website}</a>"
 
                     resources["features"].append({
                         "type": "Feature",
