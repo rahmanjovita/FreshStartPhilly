@@ -1,19 +1,20 @@
 from flask import Flask, jsonify, render_template, request
 import os
-from openai import OpenAI
 import requests
+import json
 
 app = Flask(__name__)
-client = OpenAI(api_key="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")
+
+# Hugging Face API setup
+HUGGINGFACE_API_KEY = "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"  # Replace with your actual Hugging Face API key
+HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/gpt2"  # GPT-2 model API
 
 DATASETS = {
     'food': 'C:\\Users\\Prashanth\\Downloads\\free_meal_sites.geojson',
-    # 'housing': 'https://data.opendataphilly.org/resource/pha-housing-sites.json', 
     'mental_health': 'C:\\Users\\Prashanth\\Downloads\\DOH_CommunityMentalHealthCenters202106.geojson',
-    # 'child_care': 'https://data.opendataphilly.org/resource/child-care-search.json',
-    # 'medical_care': 'https://opendataphilly.org/datasets/dvrpcs-equity-through-access-map-toolkit.json',
     'esl': 'C:\\Users\\Prashanth\\Downloads\\esl_class_locations.geojson'
 }
+
 @app.route('/')
 def home():
     return render_template("index.html")
@@ -25,50 +26,59 @@ def about():
 @app.route('/get_resources', methods=['POST'])
 def get_resources():
     user_needs = request.json.get('needs', [])
-    
-    # Step 1: Use AI to determine relevant datasets
-    dataset_list = ", ".join(DATASETS.keys())
-    prompt = f"""
-    A user in Philadelphia needs resources for {', '.join(user_needs)}. 
-    Which datasets from the following list should be used? Only return relevant dataset keys:
-    {dataset_list}
-    """
+    print(f"User needs: {user_needs}")
 
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    relevant_keys = response.choices[0].message.content.strip().split(', ')
+    # Step 1: Filter datasets based on selected needs
+    print(f"User needs: {user_needs}")
+    selected_datasets = [key for key in DATASETS.keys() if key in user_needs]
+    print(f"Selected datasets: {selected_datasets}")
 
-    # Step 2: Fetch relevant dataset data
-    resources = []
-    for key in relevant_keys:
-        if key in DATASETS:
-            dataset_url = DATASETS[key]
-            dataset_response = requests.get(dataset_url)
-            if dataset_response.status_code == 200:
-                data = dataset_response.json()
-                for item in data[:10]:  # Limit results for efficiency
-                    resources.append({
-                        "name": item.get("name", "Unknown"),
-                        "lat": float(item.get("latitude", 0)),
-                        "lng": float(item.get("longitude", 0)),
-                        "description": item.get("description", "No description available"),
-                        "category": key
-                    })
-    
-    # Step 3: AI-powered summarization of resources
-    summary_prompt = f"Summarize these resources for a user: {resources}"
-    summary_response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "Summarize these resources for a user."},
-            {"role": "user", "content": summary_prompt}],
-        max_tokens=200
-    )
-    summary_text = summary_response.choices[0].message.content.strip()
+    if not selected_datasets:
+        return jsonify({"error": "No valid resources selected"}), 400
 
-    return jsonify({"resources": resources, "summary": summary_text})
+    resources = {"type": "FeatureCollection", "features": []}
+
+    try:
+        for key in selected_datasets:
+            dataset_path = DATASETS[key]
+            if os.path.exists(dataset_path):
+                with open(dataset_path, 'r') as file:
+                    data = json.load(file)
+                    print(f"Loaded data for {key}: {data}")
+
+                for item in data.get('features', [])[:10]:  # Limit results for efficiency
+                    properties = item.get("properties", {})
+                    geometry = item.get("geometry", {})
+
+                    # Use provider as name and address_1 or others as description
+                    name = properties.get('provider', 'Unknown')
+                    description = properties.get('address_1', 'No description available')  # You can combine other fields as needed
+
+                    lat = properties.get('lat')
+                    lon = properties.get('lon')
+                    if lat == 0 or lon == 0:
+                        print(f"Warning: Missing or invalid coordinates for {name}")
+                    else:
+                        resources["features"].append({
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [lon, lat]
+                            },
+                            "properties": {
+                                "name": name,
+                                "description": description
+                            }
+                        })
+            else:
+                print(f"Dataset not found: {dataset_path}")
+                return jsonify({"error": f"Dataset not found: {dataset_path}"}), 500
+
+        return jsonify(resources)  # Successfully return the GeoJSON response
+
+    except Exception as e:
+        print(f"Error processing resources: {str(e)}")
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
