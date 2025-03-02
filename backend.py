@@ -94,19 +94,6 @@ def get_resources():
 
                     description = f"Website: <a href='http://{website}' target='_blank'>{website}</a>"
 
-                    # Handle Housing Dataset Specifically
-                    #if key == "housing":
-                    #    name = properties.get('AGENCY', 'Unknown Agency')
-                    #    address = properties.get('STREET_ADDRESS', 'No address available')
-                    #    phone = properties.get('PHONE_NUMBER', 'No phone available')
-                    #    website = properties.get('WEBSITE_URL', 'No website available')
-
-                    #    description = f"Address: {address}<br>Phone: {phone}<br>Website: <a href='http://{website}' target='_blank'>{website}</a>"
-                    #else:
-                    #    # Default extraction for other datasets (food, esl, etc.)
-                    #    name = properties.get('site_name') or properties.get('provider') or 'Unknown'
-                    #    description = properties.get('category') or properties.get('description') or 'No description available'
-
                     resources["features"].append({
                         "type": "Feature",
                         "geometry": {
