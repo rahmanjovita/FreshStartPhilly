@@ -10,8 +10,14 @@ HUGGINGFACE_API_KEY = "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"  # Replace with yo
 HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/gpt2"  # GPT-2 model API
 
 DATASETS = {
-    'food': 'C:\\Users\\dinaj\\Downloads\\free_meal_sites.geojson',
-    'esl': 'C:\\Users\\dinaj\\Downloads\\esl_class_locations.geojson',
+    #'food': 'C:\\Users\\Prashanth\\Downloads\\free_meal_sites.geojson',
+    #'housing': 'C:\\Users\\Prashanth\\Downloads\\HousingCounselingAgencies.geojson',
+    #'esl': 'C:\\Users\\Prashanth\\Downloads\\esl_class_locations.geojson'
+
+    'food': '/Users/jovitarahman/Documents/free_meal_sites.geojson',
+    'medical_care': '/Users/jovitarahman/Documents/Health_Centers.geojson',
+    'esl': '/Users/jovitarahman/Documents/esl_class_locations.geojson',
+    'housing':'/Users/jovitarahman/Documents/HousingCounselingAgencies.geojson'
 }
 
 @app.route('/')
@@ -27,7 +33,6 @@ def get_resources():
     user_needs = request.json.get('needs', [])
     print(f"User needs: {user_needs}")
 
-    # Step 1: Filter datasets based on selected needs
     selected_datasets = [key for key in DATASETS.keys() if key in user_needs]
     print(f"Selected datasets: {selected_datasets}")
 
@@ -42,42 +47,69 @@ def get_resources():
             if os.path.exists(dataset_path):
                 with open(dataset_path, 'r') as file:
                     data = json.load(file)
-                    print(f"Loaded data for {key}: {data}")
+                    print(f"Loaded data for {key}")
 
                 for item in data.get('features', [])[:10]:  # Limit results for efficiency
                     properties = item.get("properties", {})
                     geometry = item.get("geometry", {})
 
-                    if key == "food":
-                        name = properties.get('site_name', 'Unknown')
-                        description = properties.get('category', 'No description available')
-                        lat = geometry.get('coordinates', [])[1]
-                        lon = geometry.get('coordinates', [])[0]
-                    else:
-                        name = properties.get('provider', 'Unknown')
-                        description = properties.get('description', 'No description available')
-                        lat = properties.get('lat')
-                        lon = properties.get('lon')
+                    # Extract coordinates
+                    lat = properties.get('lat')
+                    lon = properties.get('lon')
 
-                    if lat == 0 or lon == 0:
-                        print(f"Warning: Missing or invalid coordinates for {name}")
+                    if lat is None or lon is None:
+                        if "coordinates" in geometry and len(geometry["coordinates"]) == 2:
+                            lon, lat = geometry["coordinates"]
+
+                    # Ensure valid coordinates
+                    if lat is None or lon is None or lat == 0 or lon == 0:
+                        print(f"Warning: Missing or invalid coordinates for {properties.get('AGENCY', 'Unknown')}")
+                        continue
+
+                    # Handle specific datasets (food, housing, medical_care, ESL)
+                    if key == "food":
+                    # Food-specific fields
+                        name = properties.get('site_name', 'Unknown Food Site')
+                        website = properties.get('website', 'No website available')
+
+                    elif key == "housing":
+                    # Housing-specific fields
+                        name = properties.get('AGENCY', 'Unknown Housing Agency')
+                        website = properties.get('WEBSITE_URL', 'No website available')
+
+                    elif key == "medical_care":
+                        # Medical care-specific fields
+                        name = properties.get('name', 'Unknown Medical Care Center')
+                        website = properties.get('website_url', 'No website available')
+
+                    elif key == "esl":
+                        # ESL-specific fields
+                        name = properties.get('provider', 'Unknown ESL Provider')
+                        website = properties.get('website', 'No website available')
+
                     else:
-                        resources["features"].append({
-                            "type": "Feature",
-                            "geometry": {
-                                "type": "Point",
-                                "coordinates": [lon, lat]
-                            },
-                            "properties": {
-                                "name": name,
-                                "description": description
-                            }
-                        })
+                        # Default extraction for other datasets (if any)
+                        name = properties.get('name', 'Unknown')
+                        website = properties.get('website', 'No website available')
+
+                    description = f"Website: <a href='http://{website}' target='_blank'>{website}</a>"
+
+                    resources["features"].append({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [lon, lat]
+                        },
+                        "properties": {
+                            "name": name,
+                            "description": description
+                        }
+                    })
             else:
                 print(f"Dataset not found: {dataset_path}")
                 return jsonify({"error": f"Dataset not found: {dataset_path}"}), 500
 
-        return jsonify(resources)  # Successfully return the GeoJSON response
+        return jsonify(resources)
 
     except Exception as e:
         print(f"Error processing resources: {str(e)}")
