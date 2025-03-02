@@ -10,14 +10,11 @@ HUGGINGFACE_API_KEY = "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"  # Replace with yo
 HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/gpt2"  # GPT-2 model API
 
 DATASETS = {
-    #'food': 'C:\\Users\\Prashanth\\Downloads\\free_meal_sites.geojson',
-    #'housing': 'C:\\Users\\Prashanth\\Downloads\\HousingCounselingAgencies.geojson',
-    #'esl': 'C:\\Users\\Prashanth\\Downloads\\esl_class_locations.geojson'
 
-    'food': '/Users/jovitarahman/Documents/free_meal_sites.geojson',
-    'medical_care': '/Users/jovitarahman/Documents/Health_Centers.geojson',
-    'esl': '/Users/jovitarahman/Documents/esl_class_locations.geojson',
-    'housing':'/Users/jovitarahman/Documents/HousingCounselingAgencies.geojson'
+    'food': 'C:\\Users\\dinaj\\Downloads\\free_meal_sites.geojson',
+    'medical_care': 'C:\\Users\\dinaj\\Downloads\\Health_Centers.geojson',
+    'esl': 'C:\\Users\\dinaj\\Downloads\\esl_class_locations.geojson',
+    'housing':'C:\\Users\\dinaj\\Downloads\\HousingCounselingAgencies.geojson'
 }
 
 @app.route('/')
