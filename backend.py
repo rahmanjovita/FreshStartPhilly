@@ -10,14 +10,10 @@ HUGGINGFACE_API_KEY = "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"  # Replace with yo
 HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/gpt2"  # GPT-2 model API
 
 DATASETS = {
-    #'food': 'C:\\Users\\Prashanth\\Downloads\\free_meal_sites.geojson',
-    #'housing': 'C:\\Users\\Prashanth\\Downloads\\HousingCounselingAgencies.geojson',
-    #'esl': 'C:\\Users\\Prashanth\\Downloads\\esl_class_locations.geojson'
-
-    'food': '/Users/jovitarahman/Documents/free_meal_sites.geojson',
-    'medical_care': '/Users/jovitarahman/Documents/Health_Centers.geojson',
-    'esl': '/Users/jovitarahman/Documents/esl_class_locations.geojson',
-    'housing':'/Users/jovitarahman/Documents/HousingCounselingAgencies.geojson'
+    'food': 'C:\\Users\\Prashanth\\Downloads\\free_meal_sites.geojson',
+    'medical_care': 'C:\\Users\\Prashanth\\Downloads\\Health_Centers.geojson',
+    'housing': 'C:\\Users\\Prashanth\\Downloads\\HousingCounselingAgencies.geojson',
+    'esl': 'C:\\Users\\Prashanth\\Downloads\\esl_class_locations.geojson'
 }
 
 @app.route('/')
@@ -70,21 +66,29 @@ def get_resources():
                     if key == "food":
                     # Food-specific fields
                         name = properties.get('site_name', 'Unknown Food Site')
+                        address = properties.get('address', 'No address available')
+                        phone = properties.get('phone_number', 'No phone number available')
                         website = properties.get('website', 'No website available')
 
                     elif key == "housing":
                     # Housing-specific fields
                         name = properties.get('AGENCY', 'Unknown Housing Agency')
+                        address = properties.get('STREET_ADDRESS', 'No address available')
+                        phone = properties.get('PHONE_NUMBER', 'No phone number available')
                         website = properties.get('WEBSITE_URL', 'No website available')
 
                     elif key == "medical_care":
                         # Medical care-specific fields
                         name = properties.get('NAME', 'Unknown Medical Care Center')
+                        address = properties.get('FULL_ADDRESS', 'No address available')
+                        phone = properties.get('PHONE', 'No phone number available')
                         website = properties.get('WEBSITE', 'No website available')
 
                     elif key == "esl":
                         # ESL-specific fields
                         name = properties.get('provider', 'Unknown ESL Provider')
+                        address = properties.get('address_1', 'No address available')
+                        phone = properties.get('No phone number available')
                         website = properties.get('website', 'No website available')
 
                     else:
@@ -92,7 +96,7 @@ def get_resources():
                         name = properties.get('name', 'Unknown')
                         website = properties.get('website', 'No website available')
 
-                    description = f"Website: <a href='http://{website}' target='_blank'>{website}</a>"
+                    description = f"Address: {address}<br>Phone: {phone}<br>Website: <a href='http://{website}' target='_blank'>{website}</a>"
 
                     resources["features"].append({
                         "type": "Feature",
