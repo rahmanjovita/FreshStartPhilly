@@ -29,7 +29,6 @@ def get_resources():
     print(f"User needs: {user_needs}")
 
     # Step 1: Filter datasets based on selected needs
-    print(f"User needs: {user_needs}")
     selected_datasets = [key for key in DATASETS.keys() if key in user_needs]
     print(f"Selected datasets: {selected_datasets}")
 
@@ -50,12 +49,17 @@ def get_resources():
                     properties = item.get("properties", {})
                     geometry = item.get("geometry", {})
 
-                    # Use provider as name and address_1 or others as description
-                    name = properties.get('provider', 'Unknown')
-                    description = properties.get('address_1', 'No description available')  # You can combine other fields as needed
+                    if key == "food":
+                        name = properties.get('site_name', 'Unknown')
+                        description = properties.get('category', 'No description available')
+                        lat = geometry.get('coordinates', [])[1]
+                        lon = geometry.get('coordinates', [])[0]
+                    else:
+                        name = properties.get('provider', 'Unknown')
+                        description = properties.get('description', 'No description available')
+                        lat = properties.get('lat')
+                        lon = properties.get('lon')
 
-                    lat = properties.get('lat')
-                    lon = properties.get('lon')
                     if lat == 0 or lon == 0:
                         print(f"Warning: Missing or invalid coordinates for {name}")
                     else:

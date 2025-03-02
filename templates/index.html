@@ -87,6 +87,13 @@
     <pre id="results"></pre>
 
     <script>
+      // Initialize the map
+      var map = L.map('map').setView([39.9526, -75.1652], 13); // Philadelphia coordinates
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
       function getLocation() {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(function (position) {
@@ -101,64 +108,50 @@
       }
 
       function fetchResources() {
-    console.log("fetchResources function called");
+        console.log("fetchResources function called");
 
-    let location = document.getElementById("location").value;
-    let needs = [];
-    const checkboxes = document.querySelectorAll('input[name="needs"]:checked');
-    checkboxes.forEach((checkbox) => {
-        needs.push(checkbox.value);
-    });
+        let location = document.getElementById("location").value;
+        let needs = [];
+        const checkboxes = document.querySelectorAll('input[name="needs"]:checked');
+        checkboxes.forEach((checkbox) => {
+          needs.push(checkbox.value);
+        });
 
-    console.log("Location:", location);
-    console.log("Needs:", needs);
+        console.log("Location:", location);
+        console.log("Needs:", needs);
 
-    // Send location and needs to the server via POST request
-    fetch("/get_resources", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ location, needs }),
-    })
-    .then((response) => response.json())
-    .then((data) => {
-        console.log("Response from server:", data);  // Debug the response
+        // Send location and needs to the server via POST request
+        fetch('/get_resources', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            needs: needs  // Send the selected needs from the checkboxes
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.features && data.features.length > 0) {
+            data.features.forEach(feature => {
+              const provider = feature.properties.name || "No Name";
+              const description = feature.properties.description || "No description";
 
-        if (data.features && data.features.length > 0) {
-            document.getElementById("results").innerText = JSON.stringify(data.features, null, 2);
+              const lat = feature.geometry.coordinates[1];
+              const lon = feature.geometry.coordinates[0];
 
-            // Initialize the map
-            const map = L.map('map').setView([39.9526, -75.1652], 12); // Center on Philadelphia
-
-            // Add OpenStreetMap tiles
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            }).addTo(map);
-
-            // Add markers for each resource in the response
-            data.features.forEach((feature) => {
-                const lat = feature.geometry.coordinates[1];
-                const lon = feature.geometry.coordinates[0];
-                const provider = feature.properties.name || "No Name";
-                const description = feature.properties.description || "No description";
-
-                // Debugging: Log coordinates and other properties
-                console.log(`Adding marker at: ${lat}, ${lon}`);
-
-                // Ensure valid coordinates
-                if (lat && lon) {
-                    const marker = L.marker([lat, lon]).addTo(map);
-                    marker.bindPopup(`<b>${provider}</b><br>${description}`);
-                } else {
-                    console.log("Invalid coordinates for marker.");
-                }
+              // Add a marker to the map
+              L.marker([lat, lon]).addTo(map)
+                .bindPopup(`<b>${provider}</b><br>${description}`);
             });
-        } else {
-            document.getElementById("results").innerText = "No resources found";
-        }
-    })
-    .catch((error) => console.error("Error:", error));
-}
-
+          } else {
+            alert("No resources found for the selected needs.");
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching resources:', error);
+        });
+      }
     </script>
   </body>
 </html>
