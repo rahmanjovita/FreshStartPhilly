@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <link
-      rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fresh Start Philly</title>
@@ -102,43 +101,64 @@
       }
 
       function fetchResources() {
-        let location = document.getElementById("location").value;
+    console.log("fetchResources function called");
 
-        let needs = [];
-        const checkboxes = document.querySelectorAll('input[name="needs"]:checked');
-        checkboxes.forEach((checkbox) => {
-          needs.push(checkbox.value);
-        });
+    let location = document.getElementById("location").value;
+    let needs = [];
+    const checkboxes = document.querySelectorAll('input[name="needs"]:checked');
+    checkboxes.forEach((checkbox) => {
+        needs.push(checkbox.value);
+    });
 
-        fetch("/get_resources", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ location, needs }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.resources) {
-              document.getElementById("results").innerText = JSON.stringify(data.resources, null, 2);
+    console.log("Location:", location);
+    console.log("Needs:", needs);
 
-              // Initialize the map
-              const map = L.map('map').setView([39.9526, -75.1652], 12); // Center on Philadelphia
+    // Send location and needs to the server via POST request
+    fetch("/get_resources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ location, needs }),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        console.log("Response from server:", data);  // Debug the response
 
-              // Add OpenStreetMap tiles
-              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        if (data.features && data.features.length > 0) {
+            document.getElementById("results").innerText = JSON.stringify(data.features, null, 2);
+
+            // Initialize the map
+            const map = L.map('map').setView([39.9526, -75.1652], 12); // Center on Philadelphia
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-              }).addTo(map);
+            }).addTo(map);
 
-              // Add markers for resources
-              data.resources.forEach((resource) => {
-                const marker = L.marker([resource.lat, resource.lng]).addTo(map);
-                marker.bindPopup(`<b>${resource.name}</b><br>${resource.description}`);
-              });
-            } else {
-              document.getElementById("results").innerText = "No resources found";
-            }
-          })
-          .catch((error) => console.error("Error:", error));
-      }
+            // Add markers for each resource in the response
+            data.features.forEach((feature) => {
+                const lat = feature.geometry.coordinates[1];
+                const lon = feature.geometry.coordinates[0];
+                const provider = feature.properties.name || "No Name";
+                const description = feature.properties.description || "No description";
+
+                // Debugging: Log coordinates and other properties
+                console.log(`Adding marker at: ${lat}, ${lon}`);
+
+                // Ensure valid coordinates
+                if (lat && lon) {
+                    const marker = L.marker([lat, lon]).addTo(map);
+                    marker.bindPopup(`<b>${provider}</b><br>${description}`);
+                } else {
+                    console.log("Invalid coordinates for marker.");
+                }
+            });
+        } else {
+            document.getElementById("results").innerText = "No resources found";
+        }
+    })
+    .catch((error) => console.error("Error:", error));
+}
+
     </script>
   </body>
 </html>
